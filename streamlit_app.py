@@ -3,10 +3,14 @@ import torch
 from torchvision import transforms
 from PIL import Image
 import numpy as np
+import os
 from model import EmotionCNN
 
 model = EmotionCNN()
-model.load_state_dict(torch.load('our_model_final.pt', map_location=torch.device('cpu')))
+
+model_path = os.path.join(os.getcwd(), r'C:\Users\nancy\OneDrive\Radna površina\projekt\RUSU_ProjektPy\our_model.pt_final.pt')
+model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
+
 model.eval()
 
 # Define transformations
