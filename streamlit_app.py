@@ -8,6 +8,7 @@ import numpy as np
 model = torch.load(r"C:\Users\nancy\OneDrive\Radna površina\projekt\RUSU_ProjektPy\our_model.pt_final.pt", map_location=torch.device("cpu"))
 model.eval()
 
+
 # Definirajte transformacije za slike (moraju biti iste kao kod treniranja)
 transform = transforms.Compose([
     transforms.Resize((64, 64)),
