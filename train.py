@@ -31,13 +31,16 @@ def eval_model(model, data_loader, loss_module):
             # Keep records of predictions for the accuracy metric (true_preds=TP+TN, num_preds=TP+TN+FP+FN)
             true_preds += (pred_labels == data_labels).sum().item()
             num_preds += data_labels.shape[0]
-
+    
+    # Calculate average loss
+    avg_loss = total_loss / len(data_loader)
     acc = true_preds / num_preds
 
     print(f"Accuracy of the model: {100.0 * acc:4.2f}%")
-    # Return the accuracy and the total loss
-    return acc, total_loss
-from torch.optim.lr_scheduler import ReduceLROnPlateau
+    print(f"Average Validation Loss: {avg_loss:.4f}")
+
+    return acc, avg_loss
+
 
 def train_model(model, optimizer, scheduler, train_data_loader, val_data_loader, loss_module, num_epochs, save_model_every, model_save_path):
     # Set model to train mode
