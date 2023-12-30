@@ -37,8 +37,9 @@ def eval_model(model, data_loader, loss_module):
     print(f"Accuracy of the model: {100.0 * acc:4.2f}%")
     # Return the accuracy and the total loss
     return acc, total_loss
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 
-def train_model(model, optimizer, train_data_loader, val_data_loader, loss_module, num_epochs, save_model_every, model_save_path):
+def train_model(model, optimizer, scheduler, train_data_loader, val_data_loader, loss_module, num_epochs, save_model_every, model_save_path):
     # Set model to train mode
     model.train()
 
@@ -47,7 +48,8 @@ def train_model(model, optimizer, train_data_loader, val_data_loader, loss_modul
     train_accuracies = []
     val_accuracies = []
 
-    # No need to specify the device here
+    #device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    #model.to(device)
 
     for epoch in range(num_epochs):
         # Training loop
@@ -59,10 +61,9 @@ def train_model(model, optimizer, train_data_loader, val_data_loader, loss_modul
             # Step 1: Move input data to device
             #data_inputs = data_inputs.to(device)
             #data_labels = data_labels.to(device)
-            
+
             # Step 2: Run the model on the input data
             preds = model(data_inputs)
-
 
             # Step 3: Calculate the loss
             loss = loss_module(preds, data_labels)
@@ -95,17 +96,21 @@ def train_model(model, optimizer, train_data_loader, val_data_loader, loss_modul
         val_accuracies.append(val_accuracy)
         val_losses.append(val_loss)
 
-        # Save the model every few epochs
-        if (epoch + 1) % save_model_every == 0:
-            state_dict = model.state_dict()
-            torch.save(state_dict, f"{model_save_path}_epoch_{epoch + 1}.pt")
+        # Step 6: Adjust learning rate based on validation loss
+        scheduler.step(val_loss)
 
         # Print or log training and validation metrics
         print(f"Epoch {epoch + 1}/{num_epochs}, "
               f"Train Loss: {average_train_loss:.4f}, "
               f"Train Accuracy: {100 * train_accuracy:.2f}%, "
               f"Validation Loss: {val_loss:.4f}, "
-              f"Validation Accuracy: {100 * val_accuracy:.2f}%")
+              f"Validation Accuracy: {100 * val_accuracy:.2f}%, "
+              f"Learning Rate: {optimizer.param_groups[0]['lr']}")
+
+        # Save the model every few epochs
+        if (epoch + 1) % save_model_every == 0:
+            state_dict = model.state_dict()
+            torch.save(state_dict, f"{model_save_path}_epoch_{epoch + 1}.pt")
 
     # Save the final model after training is complete
     final_model_path = f"{model_save_path}_final.pt"
@@ -114,4 +119,3 @@ def train_model(model, optimizer, train_data_loader, val_data_loader, loss_modul
 
     # Return the training history
     return train_losses, train_accuracies, val_losses, val_accuracies
-     
