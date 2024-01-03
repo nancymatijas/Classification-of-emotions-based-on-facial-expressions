@@ -10,6 +10,8 @@ from model import EmotionCNN
 #device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 #model.to(device)
 
+
+
 def eval_model(model, data_loader, loss_module):
     model.eval()  # Set model to eval mode
     true_preds, num_preds = 0., 0.
@@ -17,7 +19,6 @@ def eval_model(model, data_loader, loss_module):
 
     with torch.no_grad():  # Deactivate gradients for the following code
         for data_inputs, data_labels in data_loader:
-
             # Determine prediction of model on dev set
             # No need to move data to device here
             preds = model(data_inputs)
@@ -37,8 +38,6 @@ def eval_model(model, data_loader, loss_module):
     acc = true_preds / num_preds
 
     print(f"Accuracy of the model: {100.0 * acc:4.2f}%")
-    print(f"Average Validation Loss: {avg_loss:.4f}")
-
     return acc, avg_loss
 
 
@@ -122,3 +121,4 @@ def train_model(model, optimizer, scheduler, train_data_loader, val_data_loader,
 
     # Return the training history
     return train_losses, train_accuracies, val_losses, val_accuracies
+

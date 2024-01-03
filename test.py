@@ -1,3 +1,5 @@
+from matplotlib import pyplot as plt
+import numpy as np
 import torch
 from tqdm.notebook import tqdm
 
@@ -27,3 +29,28 @@ def test_model(model, test_data_loader, classes):
     print(f"Accuracy on the test set: {100 * accuracy:.2f}%")
 
     return predictions, ground_truth
+
+
+emotions = ['Angry', 'Happy', 'Sad', 'Surprise', 'Neutral', 'Fear', 'Disgust']
+def visualize_predictions(test_data_loader, classes, predictions, ground_truth, num_images=16):
+    num_rows, num_cols = 4, 4
+    fig, axes = plt.subplots(num_rows, num_cols, figsize=(10, 10))
+    
+    for i in range(num_rows):
+        for j in range(num_cols):
+            # Učitajte nove slike iz testnog skupa za svaki prikaz
+            dataiter = iter(test_data_loader)
+            images, labels = next(dataiter)
+
+            # Odaberite jednu sliku iz batch-a
+            index = i * num_cols + j
+            title = f"GT: {emotions[labels[index]]}\nPred: {emotions[predictions[index]]}"
+            
+            # Prikaz slike
+            axes[i, j].imshow(np.transpose(images[index].numpy(), (1, 2, 0)))
+            axes[i, j].set_title(title, fontsize=7, y=0.95)  # Postavljanje parametra y za pomicanje teksta dolje
+            axes[i, j].axis('off')
+
+    plt.show()
+
+

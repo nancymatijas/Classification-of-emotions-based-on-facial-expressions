@@ -73,8 +73,10 @@ def split_data(df_train):
     # Use 20% of the dataset
     #df_train, _ = train_test_split(df_train, test_size=0.8, random_state=602)
 
+    # Split the dataset into training, validation, and test sets (80-10-10)
+    #train_data, temp_data = train_test_split(df_train, test_size=0.3, random_state=602)
     # Split the dataset into training, validation, and test sets
-    train_data, temp_data = train_test_split(df_train, test_size=0.3, random_state=602)
+    train_data, temp_data = train_test_split(df_train, test_size=0.2, random_state=602)
     val_data, test_data = train_test_split(temp_data, test_size=0.5, random_state=602)
 
     return train_data, val_data, test_data
