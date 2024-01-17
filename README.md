@@ -1,2 +1,3 @@
 # RUSU_ProjektPy
-Zadnji acc na test skupu 64.02%
+our_model.pt_final.pt 61.44%
+m.pt_final.pt 64.02%
