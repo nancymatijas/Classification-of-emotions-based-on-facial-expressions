@@ -1,15 +1,6 @@
-#from pyexpat import model
-from sklearn import model_selection
 import torch
-from torch.utils.data import DataLoader
 from tqdm.notebook import tqdm
-from data_loader import get_data_loaders, EmotionDataset
-from model import EmotionCNN
-
-# Transfer the model to GPU if available
-#device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-#model.to(device)
-
+from matplotlib import pyplot as plt
 
 
 def eval_model(model, data_loader, loss_module):
@@ -20,7 +11,6 @@ def eval_model(model, data_loader, loss_module):
     with torch.no_grad():  # Deactivate gradients for the following code
         for data_inputs, data_labels in data_loader:
             # Determine prediction of model on dev set
-            # No need to move data to device here
             preds = model(data_inputs)
 
             # Calculate loss for the current batch
@@ -37,44 +27,35 @@ def eval_model(model, data_loader, loss_module):
     avg_loss = total_loss / len(data_loader)
     acc = true_preds / num_preds
 
-    print(f"Accuracy of the model: {100.0 * acc:4.2f}%")
     return acc, avg_loss
 
 
 def train_model(model, optimizer, scheduler, train_data_loader, val_data_loader, loss_module, num_epochs, save_model_every, model_save_path):
-    # Set model to train mode
-    model.train()
+    model.train()   # Set model to train mode
 
     train_losses = []
     val_losses = []
     train_accuracies = []
     val_accuracies = []
 
-    #device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    #model.to(device)
-
-    for epoch in range(num_epochs):
-        # Training loop
+    for epoch in range(num_epochs): # Training loop
         running_train_loss = 0.0
         correct_train_preds = 0
         total_train_preds = 0
 
         for data_inputs, data_labels in tqdm(train_data_loader, 'Epoch %d' % (epoch + 1)):
-            # Step 1: Move input data to device
-            #data_inputs = data_inputs.to(device)
-            #data_labels = data_labels.to(device)
 
-            # Step 2: Run the model on the input data
+            # Run the model on the input data
             preds = model(data_inputs)
 
-            # Step 3: Calculate the loss
+            # Calculate the loss
             loss = loss_module(preds, data_labels)
 
-            # Step 4: Perform backpropagation
+            # Perform backpropagation
             optimizer.zero_grad()
             loss.backward()
 
-            # Step 5: Update the parameters
+            # Update the parameters
             optimizer.step()
 
             # Accumulate training loss
@@ -98,7 +79,7 @@ def train_model(model, optimizer, scheduler, train_data_loader, val_data_loader,
         val_accuracies.append(val_accuracy)
         val_losses.append(val_loss)
 
-        # Step 6: Adjust learning rate based on validation loss
+        # Adjust learning rate based on validation loss
         scheduler.step(val_loss)
 
         # Print or log training and validation metrics
@@ -122,3 +103,24 @@ def train_model(model, optimizer, scheduler, train_data_loader, val_data_loader,
     # Return the training history
     return train_losses, train_accuracies, val_losses, val_accuracies
 
+
+def plot_metrics(train_accuracies, val_accuracies, train_losses, val_losses):
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 4))
+
+    # Plot Accuracy
+    ax1.plot(train_accuracies, label='Train Accuracy')
+    ax1.plot(val_accuracies, label='Validation Accuracy')
+    ax1.set_xlabel('Epoch')
+    ax1.set_ylabel('Accuracy')
+    ax1.legend()
+    ax1.set_title('Training and Validation Accuracy')
+
+    # Plot Loss
+    ax2.plot(train_losses, label='Train Loss')
+    ax2.plot(val_losses, label='Validation Loss')
+    ax2.set_xlabel('Epoch')
+    ax2.set_ylabel('Loss')
+    ax2.legend()
+    ax2.set_title('Training and Validation Loss')
+
+    plt.show()
