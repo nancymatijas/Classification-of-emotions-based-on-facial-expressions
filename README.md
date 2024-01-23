@@ -1,2 +1,2 @@
 # RUSU_ProjektPy
-Zadnji acc na test skupu 61.44%
+Zadnji acc na test skupu 65.81%

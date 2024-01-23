@@ -1,7 +1,7 @@
 import torch
 from tqdm.notebook import tqdm
 from matplotlib import pyplot as plt
-
+from tqdm import tqdm
 
 def eval_model(model, data_loader, loss_module):
     model.eval()  # Set model to eval mode
@@ -30,7 +30,9 @@ def eval_model(model, data_loader, loss_module):
     return acc, avg_loss
 
 
-def train_model(model, optimizer, scheduler, train_data_loader, val_data_loader, loss_module, num_epochs, save_model_every, model_save_path):
+
+
+def train_model(model, optimizer, scheduler, train_data_loader, val_data_loader, loss_module, num_epochs, save_model_every, model_save_path, patience):
     model.train()   # Set model to train mode
 
     train_losses = []
@@ -38,11 +40,15 @@ def train_model(model, optimizer, scheduler, train_data_loader, val_data_loader,
     train_accuracies = []
     val_accuracies = []
 
+    best_val_loss = float('inf')
+    consecutive_no_improvement = 0
+
     for epoch in range(num_epochs): # Training loop
         running_train_loss = 0.0
         correct_train_preds = 0
         total_train_preds = 0
 
+        # Wrap train_data_loader with tqdm
         for data_inputs, data_labels in tqdm(train_data_loader, 'Epoch %d' % (epoch + 1)):
 
             # Run the model on the input data
@@ -82,6 +88,17 @@ def train_model(model, optimizer, scheduler, train_data_loader, val_data_loader,
         # Adjust learning rate based on validation loss
         scheduler.step(val_loss)
 
+        # Early stopping
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
+            consecutive_no_improvement = 0
+        else:
+            consecutive_no_improvement += 1
+
+        if consecutive_no_improvement >= patience:
+            print(f"Early stopping at epoch {epoch + 1} as there is no improvement in validation loss for {patience} consecutive epochs.")
+            break
+
         # Print or log training and validation metrics
         print(f"Epoch {epoch + 1}/{num_epochs}, "
               f"Train Loss: {average_train_loss:.4f}, "
@@ -104,6 +121,8 @@ def train_model(model, optimizer, scheduler, train_data_loader, val_data_loader,
     return train_losses, train_accuracies, val_losses, val_accuracies
 
 
+
+
 def plot_metrics(train_accuracies, val_accuracies, train_losses, val_losses):
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 4))
 
@@ -124,3 +143,7 @@ def plot_metrics(train_accuracies, val_accuracies, train_losses, val_losses):
     ax2.set_title('Training and Validation Loss')
 
     plt.show()
+
+
+
+

@@ -4,22 +4,34 @@ import torch
 from tqdm.notebook import tqdm
 from sklearn.metrics import confusion_matrix
 import seaborn as sns
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, mean_absolute_error, mean_squared_error
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from tqdm import tqdm
 
-def test_model(model, test_data_loader, classes):
+
+def test_model(model, test_data_loader, criterion, classes):
     model.eval()  # Set the model to evaluation mode
 
     predictions = []
     ground_truth = []
+    probabilities = []
+    losses = []
 
     with torch.no_grad():
         for data_inputs, data_labels in tqdm(test_data_loader, desc="Testing"):
 
             outputs = model(data_inputs)
+            
+            # Assuming your model returns logits, calculate the loss
+            loss = criterion(outputs, data_labels)
+            losses.append(loss.item())
+
+            # Assuming your model returns logits, apply softmax to get probabilities
+            probabilities_batch = torch.nn.functional.softmax(outputs, dim=1)
             _, predicted = torch.max(outputs.data, 1)
 
             predictions.extend(predicted.cpu().numpy())
             ground_truth.extend(data_labels.cpu().numpy())
+            probabilities.extend(probabilities_batch.cpu().numpy())
 
     # Calculate accuracy 
     accuracy_sklearn = accuracy_score(ground_truth, predictions)
@@ -32,18 +44,15 @@ def test_model(model, test_data_loader, classes):
 
     print(f"Precision: {precision:.4f}, Recall: {recall:.4f}, F1 Score: {f1:.4f}")
 
-    # Calculate mean absolute percentage error (MAPE)
-    mape = mean_absolute_error(ground_truth, predictions) / (sum(ground_truth) / len(ground_truth))
-    print(f"Mean Absolute Percentage Error (MAPE): {100 * mape:.2f}%")
-
-    # Calculate root mean square error (RMSE)
-    rmse = mean_squared_error(ground_truth, predictions, squared=False)
-    print(f"Root Mean Square Error (RMSE): {rmse:.4f}")
+    # Calculate the average loss
+    average_loss = sum(losses) / len(losses)
+    print(f"Average Loss: {average_loss:.4f}")
 
     return predictions, ground_truth
 
 
-emotions = ['Angry', 'Happy', 'Sad', 'Surprise', 'Neutral', 'Fear', 'Disgust']
+emotions = ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']
+
 def visualize_predictions(test_data_loader, classes, predictions, ground_truth, num_images=16):
     num_rows, num_cols = 4, 4
     fig, axes = plt.subplots(num_rows, num_cols, figsize=(10, 10))
@@ -74,8 +83,9 @@ def visualize_predictions(test_data_loader, classes, predictions, ground_truth, 
 
 def plot_confusion_matrix(ground_truth, predictions, emotions):
     conf_matrix = confusion_matrix(ground_truth, predictions)
+    conf_matrix_percent = conf_matrix / np.sum(conf_matrix, axis=1, keepdims=True)  
     plt.figure(figsize=(8, 8))
-    sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', xticklabels=emotions, yticklabels=emotions)
+    sns.heatmap(conf_matrix_percent, annot=True, fmt='.3f', cmap='Blues', xticklabels=emotions, yticklabels=emotions)
     plt.xlabel('Predicted')
     plt.ylabel('True')
     plt.title('Confusion Matrix')

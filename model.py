@@ -1,10 +1,5 @@
 import torch.nn as nn
 import torch.nn.functional as F
-from torchvision import transforms
-
-
-import torch.nn as nn
-import torch.nn.functional as F
 
 class EmotionCNN(nn.Module):
     def __init__(self, num_classes=7):
@@ -29,13 +24,14 @@ class EmotionCNN(nn.Module):
         self.bn4 = nn.BatchNorm2d(512)
         self.dropout4 = nn.Dropout2d(0.3)
 
-        self.conv5 = nn.Conv2d(512, 1024, kernel_size=3, stride=1, padding=1)
-        self.dropout5_conv = nn.Dropout2d(0.3)
-        self.bn5 = nn.BatchNorm2d(1024)
-        self.dropout5 = nn.Dropout2d(0.3)
+        #self.conv5 = nn.Conv2d(512, 1024, kernel_size=3, stride=1, padding=1)
+        #self.dropout5_conv = nn.Dropout2d(0.3)
+        #self.bn5 = nn.BatchNorm2d(1024)
+        #self.dropout5 = nn.Dropout2d(0.3)
 
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2, padding=0)
-        self.fc1 = nn.Linear(1024 * 2 * 2, 512) 
+        #self.fc1 = nn.Linear(1024 * 2 * 2, 512)
+        self.fc1 = nn.Linear(512 * 4 * 4, 512)  
         self.fc2 = nn.Linear(512, num_classes)
 
     def forward(self, x):
@@ -59,12 +55,13 @@ class EmotionCNN(nn.Module):
         x = self.bn4(x)
         x = self.dropout4(x)
 
-        x = self.pool(F.relu(self.conv5(x))) 
-        x = self.dropout5_conv(x)
-        x = self.bn5(x)
-        x = self.dropout5(x)
+        #x = self.pool(F.relu(self.conv5(x))) 
+        #x = self.dropout5_conv(x)
+        #x = self.bn5(x)
+        #x = self.dropout5(x)
         
-        x = x.view(-1, 1024 * 2 * 2) 
+        #x = x.view(-1, 1024 * 2 * 2) 
+        x = x.view(-1, 512 * 4 * 4) 
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
         return x

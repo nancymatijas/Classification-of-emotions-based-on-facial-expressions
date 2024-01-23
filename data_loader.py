@@ -1,17 +1,15 @@
 import os
 import random
-from shutil import copy
 from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split
 import torch
 from torchvision import transforms
 from torch.utils.data import Dataset, DataLoader
 from PIL import Image
 
 # Define the directory path
-directory_path = r'C:\Users\nancy\OneDrive\Radna površina\images_fer2013_org'
+directory_path = r'C:\Users\nancy\OneDrive\Radna površina\images_fer2013_ds'
 os.chdir(directory_path)
 print("Current working directory:", os.getcwd())
 contents = os.listdir()
@@ -28,71 +26,31 @@ def seed_everything(seed):
     torch.backends.cudnn.deterministic = True
 seed_everything(602)
 
-# DEFINING THE DIRECTORIES
-path ='./'
-train = 'Training'
-test = 'PublicTest'
-
-
-## -------------POKRENUTI SAMO PRVI PUT-------------
-## Convert image data into CSV format
-#columns = ['id','label']
-#df_train = pd.DataFrame(columns=columns)
-#df_test = pd.DataFrame(columns=columns)
-
-## Train
-#if not os.path.exists(path + 'Training_csv'):
-#         os.makedirs(path + 'Training_csv')
-#count = 0
-#for class_name in os.listdir(train):
-#     class_path = os.path.join(train, class_name)
-#     for image_name in os.listdir(class_path):
-#         image_path = os.path.join(class_path, image_name)
-#         df_train.loc[count] = [image_name] + [class_name]
-#         copy(image_path, path + 'Training_csv')
-#         count += 1
-
-## Test
-#if not os.path.exists(path + 'PublicTest_csv'):
-#         os.makedirs(path + 'PublicTest_csv')
-#count = 0
-#for class_name in os.listdir(test):
-#     class_path = os.path.join(test, class_name)
-#     for image_name in os.listdir(class_path):
-#         image_path = os.path.join(class_path, image_name)
-#         df_test.loc[count] = [image_name] + [class_name]
-#         copy(image_path, path + 'PublicTest_csv')
-#         count += 1
-     
-## Shuffling the rows in the dataframes and saving them into CSV files
-#df_train = df_train.sample(frac=1).reset_index(drop=True)
-#df_test = df_test.sample(frac=1).reset_index(drop=True)
-#df_train.to_csv(path + "Training_csv.csv", index=False)
-#df_test.to_csv(path + "PublicTest_csv.csv", index=False)
-
-## ----------------------------------------------------
-
-
 # READING THE DATA
 train = './Training_csv'
-test = './PublicTest_csv'
+val = './PublicTest_csv'
+test = './PrivateTest_csv'
 train_csv = './Training_csv.csv'
-test_csv = './PublicTest_csv.csv'
+val_csv = './PublicTest_csv.csv'
+test_csv = './PrivateTest_csv.csv'
 df_train = pd.read_csv(train_csv)
+df_val = pd.read_csv(val_csv)
 df_test = pd.read_csv(test_csv)
 
 
-emotions = ['Angry', 'Happy', 'Sad', 'Surprise', 'Neutral', 'Fear', 'Disgust']
+emotions = ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']
+
 class EmotionDataset(Dataset):
-    def __init__(self, dataframe, transform=None):
+    def __init__(self, dataframe, directory, transform=None):
         self.data = dataframe
+        self.directory = directory
         self.transform = transform
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, idx):
-        img_name = os.path.join(train, self.data.iloc[idx, 0])
+        img_name = os.path.join(self.directory, self.data.iloc[idx, 0])
         image = Image.open(img_name).convert('RGB')
 
         if self.transform:
@@ -104,28 +62,31 @@ class EmotionDataset(Dataset):
 
 def visualize_data_labels(df_train):
     plt.rcParams['figure.figsize'] = (15, 5)
-    df_train['label'].value_counts().plot(kind='bar')
-    plt.title('Facial Emotion Data Labels', fontsize=20)
+    colors = ['#E64345', '#E48F1B', '#F7D027', '#6BA547', '#60CEED', '#619ED6', '#B77EA3']
+
+    counts = df_train['label'].value_counts()
+    counts.plot(kind='bar', color=colors)
+
+    plt.title('Facial Emotion Data Labels', fontsize=15)
+    plt.xlabel('Emotion', fontsize=12)
+
+    plt.xticks(rotation=0)
+    labels = counts.index
+    plt.gca().set_xticklabels(labels, rotation=0, ha='center', fontsize=10)
+
     plt.show()
-
-
-def split_data(df_train):
-    # Split the dataset into training, validation, and test sets (80-10-10)
-    train_data, temp_data = train_test_split(df_train, test_size=0.2, random_state=602)
-    val_data, test_data = train_test_split(temp_data, test_size=0.5, random_state=602)
-    return train_data, val_data, test_data
 
 
 def create_data_loaders(train_data, val_data, test_data, transform):
     # Create instances of the EmotionDataset class
-    train_dataset = EmotionDataset(train_data, transform=transform)
-    val_dataset = EmotionDataset(val_data, transform=transform)
-    test_dataset = EmotionDataset(test_data, transform=transform)
+    train_dataset = EmotionDataset(train_data, directory=train, transform=transform)
+    val_dataset = EmotionDataset(val_data, directory=val, transform=transform)
+    test_dataset = EmotionDataset(test_data, directory=test, transform=transform)
 
     # Create DataLoader instances
-    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
-    test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
+    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=64, shuffle=False)
+    test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
 
     print(f"Training set size: {len(train_data)} samples")
     print(f"Validation set size: {len(val_data)} samples")
@@ -134,36 +95,26 @@ def create_data_loaders(train_data, val_data, test_data, transform):
     return train_loader, val_loader, test_loader
 
 
-def get_data_loaders(train_csv, test_csv):
+def get_data_loaders(train_csv, val_csv, test_csv):
     # Read the data from CSV files
     df_train = pd.read_csv(train_csv)
+    df_val = pd.read_csv(val_csv)
     df_test = pd.read_csv(test_csv)
 
-    #visualize_data_labels(df_train)
-    train_data, val_data, test_data = split_data(df_train)
-
     # Define transformations
-    #transform = transforms.Compose([
-    #    transforms.Resize((64, 64)),
-    #    transforms.ToTensor(),
-    #])
-
-    # Define transformations (you may need to adjust based on your requirements)
     transform = transforms.Compose([
-    transforms.RandomHorizontalFlip(p=0.5),
-    transforms.RandomRotation(5),
-    transforms.Resize((64,64)),
-    transforms.ToTensor(),
-    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-    #transforms.RandomErasing(p=0.75, scale=(0.01, 0.3), ratio=(1.0, 1.0), value=0, inplace =True)      
+        transforms.RandomHorizontalFlip(p=0.5),
+        transforms.RandomRotation(5),
+        transforms.Resize((64,64)),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
     ])
-    return create_data_loaders(train_data, val_data, test_data, transform)
+    return create_data_loaders(df_train, df_val, df_test, transform)
 
 
-
-def show_sample_images(data_loader, emotions):
+def show_sample_images(train_loader, emotions):
     # Get some random training images
-    dataiter = iter(data_loader)
+    dataiter = iter(train_loader)
     images, labels = next(dataiter)
     images = images[:16]
     labels = labels[:16]
@@ -179,5 +130,4 @@ def show_sample_images(data_loader, emotions):
             axes[i, j].set_title(title)
             axes[i, j].axis('off')
     plt.show()
-
 
