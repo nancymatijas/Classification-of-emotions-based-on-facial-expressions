@@ -30,8 +30,6 @@ def eval_model(model, data_loader, loss_module):
     return acc, avg_loss
 
 
-
-
 def train_model(model, optimizer, scheduler, train_data_loader, val_data_loader, loss_module, num_epochs, save_model_every, model_save_path, patience):
     model.train()   # Set model to train mode
 
@@ -143,7 +141,4 @@ def plot_metrics(train_accuracies, val_accuracies, train_losses, val_losses):
     ax2.set_title('Training and Validation Loss')
 
     plt.show()
-
-
-
 

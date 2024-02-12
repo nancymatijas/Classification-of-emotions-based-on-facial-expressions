@@ -18,7 +18,6 @@ def test_model(model, test_data_loader, criterion, classes):
 
     with torch.no_grad():
         for data_inputs, data_labels in tqdm(test_data_loader, desc="Testing"):
-
             outputs = model(data_inputs)
             
             # Assuming your model returns logits, calculate the loss
@@ -59,11 +58,8 @@ def visualize_predictions(test_data_loader, classes, predictions, ground_truth, 
 
     for i in range(num_rows):
         for j in range(num_cols):
-            # Učitajte nove slike iz testnog skupa za svaki prikaz
             dataiter = iter(test_data_loader)
             images, labels = next(dataiter)
-
-            # Odaberite jednu sliku iz batch-a
             index = i * num_cols + j
             title = f"GT: {emotions[labels[index]]}\nPred: {emotions[predictions[index]]}"
 
@@ -74,7 +70,6 @@ def visualize_predictions(test_data_loader, classes, predictions, ground_truth, 
             image = std * image + mean
             image = np.clip(image, 0, 1)
 
-            # Prikaz slike
             axes[i, j].imshow(image)
             axes[i, j].set_title(title, fontsize=7, y=0.95)
             axes[i, j].axis('off')

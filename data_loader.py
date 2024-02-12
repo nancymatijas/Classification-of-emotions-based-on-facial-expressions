@@ -37,7 +37,6 @@ df_train = pd.read_csv(train_csv)
 df_val = pd.read_csv(val_csv)
 df_test = pd.read_csv(test_csv)
 
-
 emotions = ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']
 
 class EmotionDataset(Dataset):
@@ -113,7 +112,6 @@ def get_data_loaders(train_csv, val_csv, test_csv):
 
 
 def show_sample_images(train_loader, emotions):
-    # Get some random training images
     dataiter = iter(train_loader)
     images, labels = next(dataiter)
     images = images[:16]

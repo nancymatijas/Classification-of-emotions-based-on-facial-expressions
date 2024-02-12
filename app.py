@@ -1,9 +1,9 @@
-import torch 
+import torch
 from model import EmotionCNN
 import streamlit as st
 from PIL import Image
 from torchvision import transforms
-from torchvision.transforms import Grayscale, Lambda
+from torchvision.transforms import Lambda
 import torch.nn.functional as F
 import pandas as pd
 import cv2
@@ -28,7 +28,7 @@ mtcnn_detector = MTCNN()
 preprocess = transforms.Compose([
     transforms.Resize((64, 64)),
     transforms.ToTensor(),
-    Lambda(lambda x: x.repeat(3, 1, 1)),  
+    Lambda(lambda x: x.repeat(3, 1, 1)), 
 ])
 
 def preprocess_image(image):
