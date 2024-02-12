@@ -8,6 +8,8 @@ import torch.nn.functional as F
 import pandas as pd
 import numpy as np
 import altair as alt
+
+import cv2
 from mtcnn.mtcnn import MTCNN
 
 emotions = ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']
@@ -37,12 +39,14 @@ def preprocess_image(image):
     if len(faces) > 0:
         x, y, w, h = faces[0]['box']
         face_image = image_np[y:y+h, x:x+w]
-        face_image = Image.fromarray(face_image)
-        face_image = face_image.resize((64, 64))
-        input_tensor = preprocess(face_image)
-        return input_tensor
+        face_image = cv2.resize(face_image, (64, 64))
     else:
         return None
+
+    face_image = Image.fromarray(face_image)
+    input_tensor = preprocess(face_image)
+
+    return input_tensor
 
 def predict(image):
     input_tensor = preprocess_image(image)
