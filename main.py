@@ -1,14 +1,18 @@
 import torch
 from train import train_model, eval_model
 from test import test_model, visualize_predictions
-from data_loader import visualize_data_labels,get_data_loaders, show_sample_images
+#from data_loader import visualize_data_labels,get_data_loaders, show_sample_images
+from RUSU_ProjektPy.data_loader_hog import visualize_data_labels,get_data_loaders, show_sample_images
 import torch.nn as nn
 from model import EmotionCNN
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from train import plot_metrics
 from test import plot_confusion_matrix
 import pandas as pd
+import numpy as np
 
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
 
 train_csv = "./Training_csv.csv"
 val_csv = "./PublicTest_csv.csv"
@@ -17,7 +21,7 @@ test_csv = "./PrivateTest_csv.csv"
 emotions = ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']
 
 def main():
-
+        
     df_train = pd.read_csv(train_csv)
     df_train.name = 'Train Data'
     visualize_data_labels(df_train)
@@ -25,14 +29,13 @@ def main():
     df_val = pd.read_csv(val_csv)
     df_val.name = 'Validation Data'
     visualize_data_labels(df_val)
-    
+        
     df_test = pd.read_csv(test_csv)
     df_test.name = 'Test Data'
     visualize_data_labels(df_test)
 
 
     train_loader, val_loader, test_loader = get_data_loaders(train_csv, val_csv, test_csv)
-    
     show_sample_images(train_loader, emotions) ##vizualizacija slika iz train seta (tranformiranih)
     
     model = EmotionCNN()

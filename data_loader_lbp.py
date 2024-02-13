@@ -8,6 +8,9 @@ from torchvision import transforms
 from torch.utils.data import Dataset, DataLoader
 from PIL import Image
 
+from skimage.feature import local_binary_pattern
+
+
 # Define the directory path
 directory_path = r'C:\Users\nancy\OneDrive\Radna površina\images_fer2013_ds'
 os.chdir(directory_path)
@@ -39,50 +42,49 @@ df_test = pd.read_csv(test_csv)
 
 emotions = ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']
 
+
 class EmotionDataset(Dataset):
-    def __init__(self, dataframe, directory, transform=None):
+    def __init__(self, dataframe, directory, transform=None, feature_extraction=None):
         self.data = dataframe
         self.directory = directory
         self.transform = transform
+        self.feature_extraction = feature_extraction
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, idx):
         img_name = os.path.join(self.directory, self.data.iloc[idx, 0])
-        image = Image.open(img_name).convert('RGB')
+        image = Image.open(img_name).convert('L')  # Convert to grayscale
 
-        if self.transform:
-            image = self.transform(image)
+        if self.feature_extraction == 'lbp':
+            # Apply LBP feature extraction
+            radius = 3
+            n_points = 8 * radius
+            lbp_image = local_binary_pattern(np.array(image), n_points, radius, method='uniform')
+            feature = lbp_image.flatten()
+        else:
+            # If feature extraction is not specified, use the image itself as a feature
+            feature = np.array(image)
+
+        if self.transform and self.feature_extraction != 'lbp':
+            # If not in the process of extracting LBP features, apply transformations
+            feature = self.transform(feature)
 
         label = emotions.index(self.data.iloc[idx, 1])
-        return image, label
+
+        if self.transform and self.feature_extraction != 'lbp':
+            # If not in the process of extracting LBP features, apply horizontal flip
+            feature = self.transform(feature)
+
+        return feature, label
 
 
-def visualize_data_labels(df_train):
-    plt.rcParams['figure.figsize'] = (15, 5)
-    colors = ['#E64345', '#E48F1B', '#F7D027', '#6BA547', '#60CEED', '#619ED6', '#B77EA3']
-
-    counts = df_train['label'].value_counts()
-    counts.plot(kind='bar', color=colors)
-
-    plt.title('Facial Emotion Data Labels', fontsize=15)
-    plt.xlabel('Emotion', fontsize=12)
-
-    plt.xticks(rotation=0)
-    labels = counts.index
-    plt.gca().set_xticklabels(labels, rotation=0, ha='center', fontsize=10)
-
-    plt.show()
-
-
-
-
-def create_data_loaders(train_data, val_data, test_data, transform):
+def create_data_loaders(train_data, val_data, test_data, transform, feature_extraction=None):
     # Create instances of the EmotionDataset class
-    train_dataset = EmotionDataset(train_data, directory=train, transform=transform)
-    val_dataset = EmotionDataset(val_data, directory=val, transform=transform)
-    test_dataset = EmotionDataset(test_data, directory=test, transform=transform)
+    train_dataset = EmotionDataset(train_data, directory=train, transform=transform, feature_extraction=feature_extraction)
+    val_dataset = EmotionDataset(val_data, directory=val, transform=transform, feature_extraction=feature_extraction)
+    test_dataset = EmotionDataset(test_data, directory=test, transform=transform, feature_extraction=feature_extraction)
 
     # Create DataLoader instances
     train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
@@ -96,7 +98,7 @@ def create_data_loaders(train_data, val_data, test_data, transform):
     return train_loader, val_loader, test_loader
 
 
-def get_data_loaders(train_csv, val_csv, test_csv):
+def get_data_loaders(train_csv, val_csv, test_csv, feature_extraction=None):
     # Read the data from CSV files
     df_train = pd.read_csv(train_csv)
     df_val = pd.read_csv(val_csv)
@@ -106,28 +108,12 @@ def get_data_loaders(train_csv, val_csv, test_csv):
     transform = transforms.Compose([
         transforms.RandomHorizontalFlip(p=0.5),
         transforms.RandomRotation(5),
-        transforms.Resize((64,64)),
+        transforms.Resize((64, 64)),
         transforms.ToTensor(),
+        # Normalize differently for grayscale and RGB images
+        transforms.Normalize([0.5], [0.5]) if feature_extraction == 'lbp' else
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
     ])
-    return create_data_loaders(df_train, df_val, df_test, transform)
+    return create_data_loaders(df_train, df_val, df_test, transform, feature_extraction='lbp')
 
-
-def show_sample_images(train_loader, emotions):
-    dataiter = iter(train_loader)
-    images, labels = next(dataiter)
-    images = images[:16]
-    labels = labels[:16]
-
-    num_rows, num_cols = 4, 4
-    fig, axes = plt.subplots(num_rows, num_cols, figsize=(8, 8))
-
-    for i in range(num_rows):
-        for j in range(num_cols):
-            index = i * num_cols + j
-            title = emotions[labels[index]]
-            axes[i, j].imshow(images[index].permute(1, 2, 0))
-            axes[i, j].set_title(title)
-            axes[i, j].axis('off')
-    plt.show()
 
