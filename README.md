@@ -1,2 +1,1 @@
-# RUSU_ProjektPy
-Zadnji acc na test skupu 65.81%
+Klasifikacija osnovnih emocija prema izrazu lica 
