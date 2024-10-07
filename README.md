@@ -1,1 +1,1 @@
-Klasifikacija osnovnih emocija prema izrazu lica 
+**Klasifikacija osnovnih emocija prema izrazu lica 
