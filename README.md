@@ -1,1 +1,1 @@
-**Klasifikacija osnovnih emocija prema izrazu lica 
+# Naziv projekta: Klasifikacija osnovnih emocija prema izrazu lica
